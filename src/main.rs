@@ -4,7 +4,7 @@ use connection::*;
 use utils::*;
 
 fn main() {
-    let stream = RtspConnection::new(String::from("184.72.239.149:554"));
+    let stream = RtspConnection::new(String::from("rtsp://184.72.239.149/vod/mp4:BigBuckBunny_175k.mov"));
     if stream.is_ok(){
         println!("Connected"); 
     } else {
@@ -23,7 +23,13 @@ fn main() {
 
         output.clear();
         conn.send(b"DESCRIBE rtsp://184.72.239.149/vod/mp4:BigBuckBunny_175k.mov RTSP/1.0\r\nCSeq: 3\r\nAccept: application/sdp\r\n\r\n");
+        conn.read_sdp(&mut output);
+        println!("output:\n{}", output);
+
+        output.clear();
+        let setup = format!("SETUP rtsp://184.72.239.149:554/vod/mp4:BigBuckBunny_175k.mov/trackID=2 RTSP/1.0\r\nCSeq: 4\r\nUser-Agent: insight\r\nTransport: RTP/AVP;unicast;client_transport=58854-58855\r\nSession: {}\r\n\r\n", conn.get_session());
+        conn.send(setup.as_bytes());
         conn.read(&mut output);
-        println!("{}", output);
+        println!("setup output:\n{}", output);
     }
 }
