@@ -1,7 +1,9 @@
 pub mod connection;
 pub mod utils;
+pub mod response;
 use connection::*;
 use utils::*;
+use response::*;
 
 fn main() {
     let stream = RtspConnection::new(String::from("rtsp://184.72.239.149/vod/mp4:BigBuckBunny_175k.mov"));
@@ -18,7 +20,8 @@ fn main() {
     let mut output = String::new();
     loop {
         println!("waiting to read more...");
-        conn.read(&mut output);
+        //conn.read(&mut output);
+        conn.read_generic(&mut Options, &mut output);
         println!("{}", output);
 
         output.clear();

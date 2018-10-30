@@ -3,6 +3,7 @@ use std::io::{BufRead, Read, Write};
 use std::net::TcpStream;
 use std::vec::Vec;
 use std::io::{BufReader, BufWriter};
+use response::*;
 
 pub struct RtspConnection {
     stream : TcpStream,
@@ -43,9 +44,12 @@ impl RtspConnection {
         self.writer.flush().unwrap();
     }
 
+    pub fn read_generic<T : Response>(&mut self, response : &mut T, data : &mut String) { 
+        response.read(&mut self.reader, data);
+    }
+
+    #[deprecated] 
     pub fn read(&mut self, data : &mut String) { 
-        //None of the read_to_end, read_to_string work
-        //TODO: check if we can refactor this
         println!("read called");
         let mut line = String::new();
         self.reader.read_line(&mut line);
@@ -71,9 +75,13 @@ impl RtspConnection {
             self.reader.read_line(&mut line);
         }
         line.clear();
-        self.reader.read_line(&mut line);
+        //let mut vec = vec![0; ];
+        //self.reader.read_exact(&mut line);
         while line != "\r\n" {
             data.push_str(&line);
+            if line.contains("control:trackID=2") {
+                break;
+            }
             line.clear();
             let num_bytes = self.reader.read_line(&mut line).unwrap();
             if num_bytes == 0 {
