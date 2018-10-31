@@ -21,16 +21,18 @@ fn main() {
     loop {
         println!("waiting to read more...");
         //conn.read(&mut output);
-        conn.read_generic(&mut Options, &mut output);
+        let mut options = Options;
+        conn.read_generic(&mut options, &mut output);
         println!("{}", output);
 
         output.clear();
         conn.send(b"DESCRIBE rtsp://184.72.239.149/vod/mp4:BigBuckBunny_175k.mov RTSP/1.0\r\nCSeq: 3\r\nAccept: application/sdp\r\n\r\n");
-        conn.read_sdp(&mut output);
+        let mut describe_response = Describe::new();
+        conn.read_generic(&mut describe_response, &mut output);
         println!("output:\n{}", output);
 
         output.clear();
-        let setup = format!("SETUP rtsp://184.72.239.149:554/vod/mp4:BigBuckBunny_175k.mov/trackID=2 RTSP/1.0\r\nCSeq: 4\r\nUser-Agent: insight\r\nTransport: RTP/AVP;unicast;client_transport=58854-58855\r\nSession: {}\r\n\r\n", conn.get_session());
+        let setup = format!("SETUP rtsp://184.72.239.149:554/vod/mp4:BigBuckBunny_175k.mov/trackID=2 RTSP/1.0\r\nCSeq: 4\r\nUser-Agent: insight\r\nTransport: RTP/AVP;unicast;client_transport=58854-58855\r\nSession: {}\r\n\r\n", describe_response.get_session());
         conn.send(setup.as_bytes());
         conn.read(&mut output);
         println!("setup output:\n{}", output);
