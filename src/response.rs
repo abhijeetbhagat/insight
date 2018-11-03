@@ -38,16 +38,20 @@ impl Response for Describe {
         let mut line = String::new();
         reader.read_line(&mut line);
         let mut content_length = 0;
+        let mut session_parsed = false;
+        let mut content_length_parsed = false;
         while line != "\r\n" {
             //TODO create structs to represent RTSP responses
-            if line.contains("Session") {
+            if !session_parsed && line.contains("Session") {
                 let v : Vec<&str> = line.split(':').collect();
                 let v : Vec<&str> = v[1].split(';').collect();
                 self.session = v[0].trim_left().parse().unwrap();
+                session_parsed = true;
             }
-            if line.contains("Content-Length") {
+            if !content_length_parsed && line.contains("Content-Length") {
                 let v : Vec<&str> = line.split(':').collect();
                 content_length = v[1].trim().parse().unwrap();
+                content_length_parsed = true;
             }
             buf.push_str(&line);
             line.clear();

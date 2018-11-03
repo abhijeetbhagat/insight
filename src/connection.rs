@@ -11,7 +11,7 @@ pub struct RtspConnection {
     reader : BufReader<TcpStream>,
     url    : String,
     seq    : i32,
-    session : u64
+    session : u64 //TODO is this needed?
 }
 
 impl RtspConnection {
