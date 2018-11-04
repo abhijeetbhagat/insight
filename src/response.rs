@@ -64,10 +64,16 @@ impl Response for Describe {
     }
 }
 
-struct Setup;
+pub struct Setup;
 impl Response for Setup {
     fn read<R:Read + BufRead>(&mut self, reader : &mut R, buf : &mut String) {
 
     }
 }
 
+pub struct Play;
+impl Response for Play {
+    fn read<R:Read + BufRead>(&mut self, reader : &mut R, buf : &mut String) {
+
+    }
+}
