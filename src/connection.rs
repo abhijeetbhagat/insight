@@ -60,6 +60,7 @@ impl RtspConnection {
         }
     }
 
+    #[deprecated]
     pub fn read_sdp(&mut self, data: &mut String) {
         let mut line = String::new();
         self.reader.read_line(&mut line);

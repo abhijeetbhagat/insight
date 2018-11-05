@@ -1,11 +1,7 @@
 use std::io::{BufRead, Read};
 pub trait Response {
-    fn read<R:Read + BufRead>(&mut self, reader : &mut R, buf : &mut String); 
-}
-
-pub struct Options;
-impl Response for Options {
-    fn read<R:Read + BufRead>(&mut self, reader : &mut R, buf : &mut String) {
+    //Default implementation for some verbs
+    fn read<R:Read + BufRead>(&mut self, reader : &mut R, buf : &mut String) { 
         println!("read called");
         let mut line = String::new();
         reader.read_line(&mut line);
@@ -16,6 +12,9 @@ impl Response for Options {
         } 
     }
 }
+
+pub struct Options;
+impl Response for Options { }
 
 pub struct Describe {
     session : u64
@@ -65,15 +64,7 @@ impl Response for Describe {
 }
 
 pub struct Setup;
-impl Response for Setup {
-    fn read<R:Read + BufRead>(&mut self, reader : &mut R, buf : &mut String) {
-
-    }
-}
+impl Response for Setup { }
 
 pub struct Play;
-impl Response for Play {
-    fn read<R:Read + BufRead>(&mut self, reader : &mut R, buf : &mut String) {
-
-    }
-}
+impl Response for Play { }
