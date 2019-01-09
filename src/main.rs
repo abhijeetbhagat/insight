@@ -32,7 +32,7 @@ fn main() {
         println!("describe output:\n{}", output);
 
         output.clear();
-        let setup = format!("SETUP rtsp://184.72.239.149:554/vod/mp4:BigBuckBunny_175k.mov/trackID=2 RTSP/1.0\r\nCSeq: 4\r\nUser-Agent: insight\r\nTransport: RTP/AVP;unicast;Session: {}\r\n\r\n", describe_response.get_session());
+        let setup = format!("SETUP rtsp://184.72.239.149:554/vod/mp4:BigBuckBunny_175k.mov/trackID=2 RTSP/1.0\r\nCSeq: 4\r\nUser-Agent: insight\r\nTransport: RTP/AVP;unicast;client_port={}\r\nSession: {}\r\n\r\n", conn.get_port(), describe_response.get_session());
         conn.send(setup.as_bytes());
         conn.read_generic(&mut Setup, &mut output);
         println!("setup output:\n{}", output);

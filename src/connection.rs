@@ -95,5 +95,9 @@ impl RtspConnection {
         self.session
     }
 
+    pub fn get_port(&self) -> u16 {
+        self.stream.local_addr().unwrap().port()
+    }
+
 } 
 
