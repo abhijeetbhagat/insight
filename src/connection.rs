@@ -91,6 +91,10 @@ impl RtspConnection {
         }
     }
 
+    pub fn read_server_stream(&mut self, data : &mut Vec<u8>) {
+        self.reader.read_exact(data.as_mut_slice()); 
+    }
+
     pub fn get_session(&self) -> u64 {
         self.session
     }
