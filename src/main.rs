@@ -44,10 +44,13 @@ fn main() {
     println!("play output:\n{}", output);
 
     output.clear();
-    let mut output = vec![0; 1314];
+    let mut output = vec![0; 4];
     println!("output len {}\n", output.len());
     conn.read_server_stream(&mut output);
-    println!("server stream output:\n{}", std::str::from_utf8(&output).unwrap());
+    //println!("server stream output:\n{}", std::str::from_utf8(&output).unwrap());
+    for c in output {
+        println!("{:x?}", c);
+    }
 
     //break;
     //}

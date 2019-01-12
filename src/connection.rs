@@ -92,7 +92,13 @@ impl RtspConnection {
     }
 
     pub fn read_server_stream(&mut self, data : &mut Vec<u8>) {
-        self.reader.read_exact(data.as_mut_slice()); 
+        let mut buf = [0; 4];
+        self.reader.read_exact(&mut buf); 
+        if buf[0] == 0x24 { //'$' means start of RTP packet
+            let len = (buf[2] as u16) << 8 | buf[3] as u16 ;
+            let mut buf = vec![0; len as usize];
+            self.reader.read_exact(buf.as_mut_slice());
+        }
     }
 
     pub fn get_session(&self) -> u64 {
