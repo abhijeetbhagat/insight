@@ -96,14 +96,40 @@ impl RtspConnection {
         self.reader.read_exact(&mut buf); 
         loop {
             if buf[0] == 0x24 { //'$' means start of RTP packet
-                let len = (buf[2] as u16) << 8 | buf[3] as u16 ;
+                let len = (buf[2] as u16) << 8 | buf[3] as u16 ; //combile the last two bytes as length of the packet
                 println!("Reading {} bytes\n", len);
                 let mut data = vec![0; len as usize];
                 self.reader.read_exact(data.as_mut_slice());
+                //self.read_header();
             }
             self.reader.read_exact(&mut buf);
         }
     }
+
+    fn read_header(&self, data : &[u8]) -> RtpPacket {
+        let version = if data[0] & 0x80 != 0{
+            2
+        } else {
+            1
+        };
+        let padding = (data[0] & 0x20) > 0;
+        let extension = (data[0] & 0x10) > 0;
+        let cc = data[0] & 0xF;
+       
+        /*
+           RTPPacket { 
+           version : version,
+           padding : padding,
+           extension : extension,
+           cc : cc
+           marker : marker,
+           payload_type : payload_type,
+           seq_num : seq_num,
+           timestamp : timestamp,
+           ssrc : ssrc
+           }
+         *
+         /    }
 
     pub fn get_session(&self) -> u64 {
         self.session
