@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct RTPPacket {
     pub version : u8,
     pub padding : bool,
