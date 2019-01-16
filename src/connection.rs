@@ -4,6 +4,7 @@ use std::net::TcpStream;
 use std::vec::Vec;
 use std::io::{BufReader, BufWriter};
 use response::*;
+use rtp_packet::*;
 
 pub struct RtspConnection {
     stream : TcpStream,
@@ -106,7 +107,7 @@ impl RtspConnection {
         }
     }
 
-    fn read_header(&self, data : &[u8]) -> RtpPacket {
+    fn read_header(&self, data : &[u8]) -> RTPPacket {
         let version = if data[0] & 0x80 != 0{
             2
         } else {
@@ -115,21 +116,25 @@ impl RtspConnection {
         let padding = (data[0] & 0x20) > 0;
         let extension = (data[0] & 0x10) > 0;
         let cc = data[0] & 0xF;
+        let marker = (data[1] & 0x80) > 0;
+        let payload_type = (data[1] & 0x7F);
+        let seq_num = (data[2] as u16) << 8 | data[3] as u16;
+        let timestamp = ((data[4] as u32) << 24) | ((data[5] as u32) << 16) | ((data[6] as u32) << 8) | data[7] as u32;
        
-        /*
-           RTPPacket { 
-           version : version,
-           padding : padding,
-           extension : extension,
-           cc : cc
-           marker : marker,
-           payload_type : payload_type,
-           seq_num : seq_num,
-           timestamp : timestamp,
-           ssrc : ssrc
-           }
-         *
-         /    }
+        let ssrc = ((data[8] as u32) << 24) | ((data[9] as u32) << 16) | ((data[10] as u32) << 8) | data[11] as u32;
+        
+        RTPPacket { 
+            version : version,
+            padding : padding,
+            extension : extension,
+            cc : cc,
+            marker : marker,
+            payload_type : payload_type,
+            seq_num : seq_num,
+            timestamp : timestamp,
+            ssrc : ssrc
+        }
+    }
 
     pub fn get_session(&self) -> u64 {
         self.session
