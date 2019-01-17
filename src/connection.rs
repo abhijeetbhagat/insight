@@ -98,10 +98,10 @@ impl RtspConnection {
         loop {
             if buf[0] == 0x24 { //'$' means start of RTP packet
                 let len = (buf[2] as u16) << 8 | buf[3] as u16 ; //combile the last two bytes as length of the packet
-                println!("Reading {} bytes\n", len);
+                //println!("Reading {} bytes\n", len);
                 let mut data = vec![0; len as usize];
                 self.reader.read_exact(data.as_mut_slice());
-                //self.read_header();
+                println!("{:?}", self.read_header(&data));
             }
             self.reader.read_exact(&mut buf);
         }
@@ -122,7 +122,7 @@ impl RtspConnection {
         let timestamp = ((data[4] as u32) << 24) | ((data[5] as u32) << 16) | ((data[6] as u32) << 8) | data[7] as u32;
        
         let ssrc = ((data[8] as u32) << 24) | ((data[9] as u32) << 16) | ((data[10] as u32) << 8) | data[11] as u32;
-        
+
         RTPPacket { 
             version : version,
             padding : padding,
@@ -132,7 +132,10 @@ impl RtspConnection {
             payload_type : payload_type,
             seq_num : seq_num,
             timestamp : timestamp,
-            ssrc : ssrc
+            ssrc : ssrc,
+            csrcs : None,
+            profile_specific_ext_hdr_id : None,
+            ext_hdr_len : None
         }
     }
 
