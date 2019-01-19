@@ -49,49 +49,6 @@ impl RtspConnection {
         response.read(&mut self.reader, data);
     }
 
-    #[deprecated] 
-    pub fn read(&mut self, data : &mut String) { 
-        println!("read called");
-        let mut line = String::new();
-        self.reader.read_line(&mut line);
-        while line != "\r\n" {
-            data.push_str(&line);
-            line.clear();
-            self.reader.read_line(&mut line);
-        }
-    }
-
-    #[deprecated]
-    pub fn read_sdp(&mut self, data: &mut String) {
-        let mut line = String::new();
-        self.reader.read_line(&mut line);
-        while line != "\r\n" {
-            //TODO create structs to represent RTSP responses
-            if line.contains("Session") {
-                let v : Vec<&str> = line.split(':').collect();
-                let v : Vec<&str> = v[1].split(';').collect();
-                self.session = v[0].trim_left().parse().unwrap();
-            }
-            data.push_str(&line);
-            line.clear();
-            self.reader.read_line(&mut line);
-        }
-        line.clear();
-        //let mut vec = vec![0; ];
-        //self.reader.read_exact(&mut line);
-        while line != "\r\n" {
-            data.push_str(&line);
-            if line.contains("control:trackID=2") {
-                break;
-            }
-            line.clear();
-            let num_bytes = self.reader.read_line(&mut line).unwrap();
-            if num_bytes == 0 {
-                break;
-            }
-        }
-    }
-
     pub fn read_server_stream(&mut self, data : &mut Vec<u8>) {
         let mut buf = [0; 4];
         self.reader.read_exact(&mut buf); 
