@@ -76,10 +76,21 @@ impl RtspConnection {
         let marker = (data[1] & 0x80) > 0;
         let payload_type = (data[1] & 0x7F);
         let seq_num = (data[2] as u16) << 8 | data[3] as u16;
+        //TODO: abhi - create a struct to represent a raw packet and add utility methods to read
+        //data like - read_unsigned_int(), read_byte(), etc.
         let timestamp = ((data[4] as u32) << 24) | ((data[5] as u32) << 16) | ((data[6] as u32) << 8) | data[7] as u32;
        
         let ssrc = ((data[8] as u32) << 24) | ((data[9] as u32) << 16) | ((data[10] as u32) << 8) | data[11] as u32;
 
+        let mut i = 12usize;
+        let mut csrcs = Vec::new();
+        for _ in 0..cc { 
+            let csrc = ((data[i] as u32) << 24) | ((data[i+1] as u32) << 16) | ((data[i+2] as u32) << 8) | data[i+3] as u32;
+            csrcs.push(csrc);
+            i += 4;
+        }
+
+        println!("{}", data[12]);
         RTPPacket { 
             version : version,
             padding : padding,
@@ -90,7 +101,7 @@ impl RtspConnection {
             seq_num : seq_num,
             timestamp : timestamp,
             ssrc : ssrc,
-            csrcs : None,
+            csrcs : if cc > 0 {Some(csrcs)} else {None},
             profile_specific_ext_hdr_id : None,
             ext_hdr_len : None
         }

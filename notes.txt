@@ -1,3 +1,26 @@
 https://stackoverflow.com/questions/7665217/how-to-process-raw-udp-packets-so-that-they-can-be-decoded-by-a-decoder-filter-i
 RTSP interleaved frame - https://tools.ietf.org/html/rfc2326#section-10.12
 https://ask.wireshark.org/question/3498/what-is-the-difference-between-tcp-payload-and-tcp-segment-data/
+RTP packet parser - https://svn.xiph.org/trunk/xiph-rtp/theorartp-client.c
+https://stackoverflow.com/questions/22626021/idr-and-non-idr-difference
+
+NAL unit types - 
+			/*
+				  Type   Packet    Type name                        Section
+				  ---------------------------------------------------------
+				  0      undefined                                    -
+				  1-23   NAL unit  Single NAL unit packet per H.264   5.6
+				  24     STAP-A    Single-time aggregation packet     5.7.1
+				  25     STAP-B    Single-time aggregation packet     5.7.1
+				  26     MTAP16    Multi-time aggregation packet      5.7.2
+				  27     MTAP24    Multi-time aggregation packet      5.7.2
+				  28     FU-A      Fragmentation unit                 5.8
+				  29     FU-B      Fragmentation unit                 5.8
+				  30-31  undefined                                    -
+
+				  +---------------+
+				  |0|1|2|3|4|5|6|7|
+				  +-+-+-+-+-+-+-+-+
+				  |F|NRI|  Type   |
+				  +---------------+
+			*/
