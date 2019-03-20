@@ -3,13 +3,13 @@ pub struct RTPPacket {
     pub version : u8,
     pub padding : bool,
     pub extension : bool,
-    pub cc : u8,
+    pub cc : u8, //csrc count
     pub marker : bool,
     pub payload_type : u8,
     pub seq_num : u16,
     pub timestamp : u32,
-    pub ssrc : u32,
-    pub csrcs : Option<Vec<u32>>,
+    pub ssrc : u32, //synchronization source identifier
+    pub csrcs : Option<Vec<u32>>, //contributing source identifiers
     pub profile_specific_ext_hdr_id : Option<u16>,
     pub ext_hdr_len : Option<u16>
 }

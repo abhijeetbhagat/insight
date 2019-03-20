@@ -3,6 +3,9 @@ RTSP interleaved frame - https://tools.ietf.org/html/rfc2326#section-10.12
 https://ask.wireshark.org/question/3498/what-is-the-difference-between-tcp-payload-and-tcp-segment-data/
 RTP packet parser - https://svn.xiph.org/trunk/xiph-rtp/theorartp-client.c
 https://stackoverflow.com/questions/22626021/idr-and-non-idr-difference
+https://www.quora.com/What-are-SPS-and-PPS-in-video-codecs
+https://cardinalpeak.com/blog/worlds-smallest-h-264-encoder/
+https://superuser.com/questions/489087/what-are-the-differences-between-h-264-profiles
 
 NAL unit types - 
 			/*
