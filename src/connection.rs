@@ -11,7 +11,7 @@ pub struct RtspConnection {
     writer: BufWriter<TcpStream>,
     reader: BufReader<TcpStream>,
     url: String,
-    seq: i32,
+    cseq: i32,
     session: u64, //TODO is this needed?
 }
 
@@ -32,12 +32,38 @@ impl RtspConnection {
             writer: BufWriter::new(stream_out),
             reader: BufReader::new(stream_in),
             url: url.clone(),
-            seq: 0,
+            cseq: 1,
             session: 0,
         })
     }
 
-    pub fn send(&mut self, data: &[u8]) {
+    fn options(&mut self) {
+        let command = format!(
+            "OPTIONS {} RTSP/1.0\r\nCSeq: {}\r\n\r\n",
+            self.url, self.cseq
+        );
+        self.send(&command.as_bytes());
+    }
+
+    fn describe(&mut self) {
+        let command = format!(
+            "DESCRIBE {} RTSP/1.0\r\nCSeq: {}\r\nAccept: application/sdp\r\n\r\n",
+            self.url, self.cseq
+        );
+        self.send(&command.as_bytes());
+    }
+
+    fn setup(&mut self) {
+        let command = format!("SETUP {}/track1 RTSP/1.0\r\nCSeq: {}\r\nUser-Agent: insight\r\nTransport: RTP/AVP;unicast;interleaved=0-1\r\n\r\n",           self.url, self.cseq
+        );
+        self.send(&command.as_bytes());
+    }
+    fn play(&mut self, session: &str) {
+        let command = format!("PLAY {} RTSP/1.0\r\nCSeq: {}\r\nUser-Agent: insight\r\nSession: {}\r\nRange: npt=0.000-\r\n\r\n", self.url, self.cseq, session);
+        self.send(&command.as_bytes());
+    }
+
+    fn send(&mut self, data: &[u8]) {
         self.writer.write(data).unwrap();
         //Flushing is necessary in order to send the data over the TCP stream
         self.writer.flush().unwrap();
