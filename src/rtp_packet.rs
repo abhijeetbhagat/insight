@@ -12,6 +12,7 @@ pub struct RTPPacket {
     pub csrcs: Option<Vec<u32>>, //contributing source identifiers
     pub profile_specific_ext_hdr_id: Option<u16>,
     pub ext_hdr_len: Option<u16>,
+    pub payload: Vec<u8>,
 }
 
 impl RTPPacket {
@@ -42,6 +43,7 @@ impl RTPPacket {
             csrcs,
             profile_specific_ext_hdr_id,
             ext_hdr_len,
+            payload: vec![],
         }
     }
 }

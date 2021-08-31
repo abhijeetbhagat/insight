@@ -108,6 +108,7 @@ impl RtspConnection {
             csrcs: if cc > 0 { Some(csrcs) } else { None },
             profile_specific_ext_hdr_id: None,
             ext_hdr_len: None,
+            payload: data[i..].into(),
         }
     }
 

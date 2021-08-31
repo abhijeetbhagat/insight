@@ -1,10 +1,6 @@
-pub mod connection;
-pub mod response;
-pub mod rtp_packet;
-pub mod utils;
-use connection::*;
-use response::*;
-use utils::*;
+use insight::connection::*;
+use insight::response::*;
+use insight::utils::*;
 
 fn main() {
     let stream = RtspConnection::new(String::from(
