@@ -1,8 +1,10 @@
+extern crate insight;
 use insight::connection::*;
 use insight::response::*;
 use insight::utils::*;
 
-fn main() {
+#[test]
+fn test_integration() {
     let stream = RtspConnection::new(String::from(
         "rtsp://184.72.239.149/vod/mp4:BigBuckBunny_175k.mov",
     ));
@@ -13,8 +15,6 @@ fn main() {
     }
 
     let mut conn = stream.unwrap();
-    //the extra CRLF at the end of the write string is needed otherwise; RTSP request will not be recognized otherwise. Wireshark
-    //shows TCP as the protocol and not RTSP for this request
     conn.options();
     let mut output = String::new();
     println!("waiting to read more...");
@@ -45,7 +45,7 @@ fn main() {
     loop {
         conn.read_server_stream(&mut output);
         //println!("server stream output:\n{}", std::str::from_utf8(&output).unwrap());
-        for c in output {
+        for c in output.iter() {
             println!("{:x?}", c);
         }
 

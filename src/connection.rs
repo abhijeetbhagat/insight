@@ -6,6 +6,7 @@ use std::net::TcpStream;
 use std::vec::Vec;
 use utils::*;
 
+/// an rtsp connection
 pub struct RtspConnection {
     stream: TcpStream,
     writer: BufWriter<TcpStream>,
@@ -16,6 +17,7 @@ pub struct RtspConnection {
 }
 
 impl RtspConnection {
+    /// creates a new `RtspConnection`
     pub fn new(url: String) -> Result<RtspConnection, String> {
         let (server, port) = match parse_rtsp_url(&url) {
             Ok((server, port)) => (server, port),
@@ -37,7 +39,8 @@ impl RtspConnection {
         })
     }
 
-    fn options(&mut self) {
+    /// sends a options command
+    pub fn options(&mut self) {
         let command = format!(
             "OPTIONS {} RTSP/1.0\r\nCSeq: {}\r\n\r\n",
             self.url, self.cseq
@@ -45,7 +48,8 @@ impl RtspConnection {
         self.send(&command.as_bytes());
     }
 
-    fn describe(&mut self) {
+    /// sends a describe command
+    pub fn describe(&mut self) {
         let command = format!(
             "DESCRIBE {} RTSP/1.0\r\nCSeq: {}\r\nAccept: application/sdp\r\n\r\n",
             self.url, self.cseq
@@ -53,33 +57,39 @@ impl RtspConnection {
         self.send(&command.as_bytes());
     }
 
-    fn setup(&mut self) {
+    /// sends a setup command
+    pub fn setup(&mut self) {
         let command = format!("SETUP {}/track1 RTSP/1.0\r\nCSeq: {}\r\nUser-Agent: insight\r\nTransport: RTP/AVP;unicast;interleaved=0-1\r\n\r\n",           self.url, self.cseq
         );
         self.send(&command.as_bytes());
     }
-    fn play(&mut self, session: &str) {
+
+    /// sends a play command with the given session
+    pub fn play(&mut self, session: u64) {
         let command = format!("PLAY {} RTSP/1.0\r\nCSeq: {}\r\nUser-Agent: insight\r\nSession: {}\r\nRange: npt=0.000-\r\n\r\n", self.url, self.cseq, session);
         self.send(&command.as_bytes());
     }
 
+    /// sends data over the underlying socket
     fn send(&mut self, data: &[u8]) {
         self.writer.write(data).unwrap();
         //Flushing is necessary in order to send the data over the TCP stream
         self.writer.flush().unwrap();
     }
 
+    /// reads a response for the sent command
     pub fn read_generic<T: Response>(&mut self, response: &mut T, data: &mut String) {
         response.read(&mut self.reader, data);
     }
 
+    /// reads rtp packets from the incoming stream
     pub fn read_server_stream(&mut self, data: &mut Vec<u8>) {
         let mut buf = [0; 4];
         self.reader.read_exact(&mut buf);
         loop {
             if buf[0] == 0x24 {
                 //'$' means start of RTP packet
-                let len = (buf[2] as u16) << 8 | buf[3] as u16; //combile the last two bytes as length of the packet
+                let len = (buf[2] as u16) << 8 | buf[3] as u16; //combine the last two bytes as length of the packet
                                                                 //println!("Reading {} bytes\n", len);
                 let mut data = vec![0; len as usize];
                 self.reader.read_exact(data.as_mut_slice());
@@ -89,6 +99,7 @@ impl RtspConnection {
         }
     }
 
+    /// reads header of an rtp packet
     fn read_header(&self, data: &[u8]) -> RTPPacket {
         let version = if data[0] & 0x80 != 0 { 2 } else { 1 };
         let padding = (data[0] & 0x20) > 0;
@@ -138,10 +149,12 @@ impl RtspConnection {
         }
     }
 
+    /// gets session of this connection
     pub fn get_session(&self) -> u64 {
         self.session
     }
 
+    /// gets port of this connection
     pub fn get_port(&self) -> u16 {
         self.stream.local_addr().unwrap().port()
     }
