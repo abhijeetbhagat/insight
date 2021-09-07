@@ -1,6 +1,4 @@
-pub fn parse_rtsp_url(url: &String) -> Result<(String, String), String> {
-    let server = String::new();
-    let port = String::new();
+pub fn parse_rtsp_url(url: &str) -> Result<(String, String), String> {
     //rtsp://server:port/whatever/
     let v: Vec<&str> = url.splitn(4, '/').collect();
     let v: Vec<&str> = v[2].splitn(1, '/').collect();
