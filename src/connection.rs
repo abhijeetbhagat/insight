@@ -24,8 +24,9 @@ pub struct RtspConnection {
 
 impl RtspConnection {
     /// creates a new `RtspConnection`
-    pub fn new(url: &str) -> Result<RtspConnection, String> {
-        let (server, port) = match parse_rtsp_url(url.into()) {
+    pub fn new<S: Into<String>>(url: S) -> Result<RtspConnection, String> {
+        let url = url.into();
+        let (server, port) = match parse_rtsp_url(&url) {
             Ok((server, port)) => (server, port),
             Err(e) => return Err(e),
         };
