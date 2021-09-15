@@ -172,20 +172,20 @@ impl RtspConnection {
     }
 
     /// reads rtp packets from the incoming stream
-    pub fn read_server_stream(&mut self, data: &mut Vec<u8>) {
+    pub fn read_server_stream(&mut self) -> Option<RTPPacket> {
         let mut buf = [0; 4];
         self.reader.read_exact(&mut buf);
-        loop {
-            if buf[0] == 0x24 {
-                //'$' means start of RTP packet
-                let len = (buf[2] as u16) << 8 | buf[3] as u16; //combine the last two bytes as length of the packet
-                                                                //println!("Reading {} bytes\n", len);
-                let mut data = vec![0; len as usize];
-                self.reader.read_exact(data.as_mut_slice());
-                println!("{:?}", self.read_header(&data));
-            }
-            self.reader.read_exact(&mut buf);
+        let mut packet: Option<RTPPacket> = None;
+        if buf[0] == 0x24 {
+            //'$' means start of RTP packet
+            let len = (buf[2] as u16) << 8 | buf[3] as u16; //combine the last two bytes as length of the packet
+                                                            //println!("Reading {} bytes\n", len);
+            let mut data = vec![0; len as usize];
+            self.reader.read_exact(data.as_mut_slice());
+            packet = Some(data.as_slice().into());
+            println!("{:?}", packet);
         }
+        packet
     }
 
     /// reads header of an rtp packet
