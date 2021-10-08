@@ -2,7 +2,7 @@ use response::*;
 use rtp_packet::*;
 use std::io::{BufRead, Read, Write};
 use std::io::{BufReader, BufWriter};
-use std::net::TcpStream;
+use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
 use std::vec::Vec;
 use utils::*;
@@ -30,28 +30,42 @@ impl RtspConnection {
             Ok((server, port)) => (server, port),
             Err(e) => return Err(e),
         };
+        let mut ip = None;
+        for addr in server.to_socket_addrs().unwrap() {
+            match addr {
+                std::net::SocketAddr::V4(addr) => {
+                    ip = Some(addr);
+                    break;
+                }
+                std::net::SocketAddr::V6(_) => todo!(),
+            }
+        }
 
-        println!("connecting to server ... waiting upto 5 secs ...");
-        if let Ok(stream) = TcpStream::connect_timeout(
-            &format!("{}:{}", server, port).parse().unwrap(),
-            Duration::from_secs(5),
-        ) {
-            //Since self referencing in structs is not supported without TP crates,
-            //we can use try_clone on the TcpStream to create multiple references to the same stream
-            let stream_out = stream.try_clone().unwrap();
-            let stream_in = stream.try_clone().unwrap();
-            Ok(RtspConnection {
-                stream,
-                writer: BufWriter::new(stream_out),
-                reader: BufReader::new(stream_in),
-                url: url.into(),
-                cseq: 1,
-                session: String::new(),
-                audio_track: String::new(),
-                video_track: String::new(),
-            })
+        if let Some(ip) = ip {
+            println!("connecting to server ... waiting upto 5 secs ...");
+            if let Ok(stream) = TcpStream::connect_timeout(
+                &format!("{}:{}", ip, port).parse().unwrap(),
+                Duration::from_secs(5),
+            ) {
+                //Since self referencing in structs is not supported without TP crates,
+                //we can use try_clone on the TcpStream to create multiple references to the same stream
+                let stream_out = stream.try_clone().unwrap();
+                let stream_in = stream.try_clone().unwrap();
+                Ok(RtspConnection {
+                    stream,
+                    writer: BufWriter::new(stream_out),
+                    reader: BufReader::new(stream_in),
+                    url: url.into(),
+                    cseq: 1,
+                    session: String::new(),
+                    audio_track: String::new(),
+                    video_track: String::new(),
+                })
+            } else {
+                Err("error connecting ...".into())
+            }
         } else {
-            Err("error connecting ...".into())
+            Err("could not resolve rtsp server ip...".into())
         }
     }
 
