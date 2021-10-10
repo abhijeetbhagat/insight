@@ -30,11 +30,19 @@ impl RtspConnection {
             Ok((server, port)) => (server, port),
             Err(e) => return Err(e),
         };
+        println!("server {}", server);
         let mut ip = None;
-        for addr in server.to_socket_addrs().unwrap() {
+        for addr in format!("{}:{}", server, port)
+            .to_socket_addrs()
+            .map_err(|_| "could not resolve address")?
+        {
             match addr {
                 std::net::SocketAddr::V4(addr) => {
-                    ip = Some(addr);
+                    println!("resolved ip {}", addr);
+                    let str_addr = addr.to_string();
+                    let v: Vec<_> = str_addr.split(":").collect();
+                    let resolved_ip: String = v[0].to_owned();
+                    ip = Some(resolved_ip);
                     break;
                 }
                 std::net::SocketAddr::V6(_) => todo!(),
@@ -97,7 +105,7 @@ impl RtspConnection {
         let mut buf = String::new();
 
         while line != "\r\n" {
-            //TODO create structs to represent RTSP responses
+            println!("line {}", line);
             if !session_parsed && line.contains("Session") {
                 let v: Vec<&str> = line.split(':').collect();
                 let v: Vec<&str> = v[1].split(';').collect();
@@ -125,6 +133,7 @@ impl RtspConnection {
                         self.audio_track = track.into();
                     } else {
                         self.video_track = track.into();
+                        println!("video track: {}", self.video_track);
                     }
                 }
             }
@@ -137,6 +146,32 @@ impl RtspConnection {
         let mut vec = vec![0u8; content_length];
         self.reader.read_exact(&mut vec);
         buf.push_str(&String::from_utf8(vec).unwrap());
+        self.parse_sdp(&buf)
+    }
+
+    fn parse_sdp(&mut self, buf: &str) {
+        let mut audio_section = false;
+        for line in buf.split("\r\n") {
+            if line.contains("m=audio") {
+                audio_section = true;
+            }
+
+            if line.contains("m=video") {
+                audio_section = false;
+            }
+
+            if line.contains("a=control") {
+                let track = line.split(':').collect::<Vec<&str>>()[1];
+                if track != "*" {
+                    if audio_section {
+                        self.audio_track = track.into();
+                    } else {
+                        self.video_track = track.into();
+                        println!("video track: {}", self.video_track);
+                    }
+                }
+            }
+        }
     }
 
     /// sends a setup command
@@ -152,7 +187,7 @@ impl RtspConnection {
     }
 
     fn _setup(&mut self, track: String) {
-        let command = format!("SETUP {}/{} RTSP/1.0\r\nCSeq: {}\r\nUser-Agent: insight\r\nTransport: RTP/AVP;unicast;interleaved=0-1\r\n\r\n",           self.url, track, self.cseq
+        let command = format!("SETUP {}/{} RTSP/1.0\r\nCSeq: {}\r\nUser-Agent: insight\r\nSession: {}\r\nTransport: RTP/AVP;unicast;interleaved=0-1\r\n\r\n",           self.url, track, self.cseq, self.session
         );
         self.cseq += 1;
         self.send(&command.as_bytes());
