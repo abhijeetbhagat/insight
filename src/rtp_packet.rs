@@ -80,7 +80,6 @@ impl From<&[u8]> for RTPPacket {
             i += 4;
         }
 
-        println!("{}", data[12]);
         RTPPacket {
             version,
             padding,

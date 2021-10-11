@@ -1,4 +1,3 @@
-use response::*;
 use rtp_packet::*;
 use std::io::{BufRead, Read, Write};
 use std::io::{BufReader, BufWriter};
@@ -88,7 +87,7 @@ impl RtspConnection {
     }
 
     /// sends a describe command
-    pub fn describe(&mut self) {
+    pub fn describe(&mut self) -> Result<(), std::io::Error> {
         let command = format!(
             "DESCRIBE {} RTSP/1.0\r\nCSeq: {}\r\nAccept: application/sdp\r\n\r\n",
             self.url, self.cseq
@@ -97,7 +96,7 @@ impl RtspConnection {
         self.send(&command.as_bytes());
 
         let mut line = String::new();
-        self.reader.read_line(&mut line);
+        self.reader.read_line(&mut line)?;
         let mut content_length = 0;
         let mut session_parsed = false;
         let mut audio_section = false;
@@ -105,7 +104,6 @@ impl RtspConnection {
         let mut buf = String::new();
 
         while line != "\r\n" {
-            println!("line {}", line);
             if !session_parsed && line.contains("Session") {
                 let v: Vec<&str> = line.split(':').collect();
                 let v: Vec<&str> = v[1].split(';').collect();
@@ -133,7 +131,6 @@ impl RtspConnection {
                         self.audio_track = track.into();
                     } else {
                         self.video_track = track.into();
-                        println!("video track: {}", self.video_track);
                     }
                 }
             }
@@ -146,7 +143,8 @@ impl RtspConnection {
         let mut vec = vec![0u8; content_length];
         self.reader.read_exact(&mut vec);
         buf.push_str(&String::from_utf8(vec).unwrap());
-        self.parse_sdp(&buf)
+        self.parse_sdp(&buf);
+        Ok(())
     }
 
     fn parse_sdp(&mut self, buf: &str) {
@@ -167,7 +165,6 @@ impl RtspConnection {
                         self.audio_track = track.into();
                     } else {
                         self.video_track = track.into();
-                        println!("video track: {}", self.video_track);
                     }
                 }
             }
@@ -228,11 +225,9 @@ impl RtspConnection {
         if buf[0] == 0x24 {
             //'$' means start of RTP packet
             let len = (buf[2] as u16) << 8 | buf[3] as u16; //combine the last two bytes as length of the packet
-                                                            //println!("Reading {} bytes\n", len);
             let mut data = vec![0; len as usize];
             self.reader.read_exact(data.as_mut_slice());
             packet = Some(data.as_slice().into());
-            println!("{:?}", packet);
         }
         packet
     }
@@ -269,7 +264,6 @@ impl RtspConnection {
             i += 4;
         }
 
-        println!("{}", data[12]);
         RTPPacket {
             version,
             padding,

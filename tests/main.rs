@@ -16,11 +16,6 @@ fn test_integration() {
     }
 
     let mut conn = stream.unwrap();
-    // conn.options();
-    // let mut output = String::new();
-    println!("waiting to read more...");
-    // let mut options = Options;
-    // println!("options output \n{}", output);
 
     conn.describe();
 
