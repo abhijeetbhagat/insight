@@ -15,39 +15,6 @@ pub struct RTPPacket {
     pub payload: Vec<u8>,
 }
 
-impl RTPPacket {
-    fn new(
-        version: u8,
-        padding: bool,
-        extension: bool,
-        cc: u8,
-        marker: bool,
-        payload_type: u8,
-        seq_num: u16,
-        timestamp: u32,
-        ssrc: u32,
-        csrcs: Option<Vec<u32>>,
-        profile_specific_ext_hdr_id: Option<u16>,
-        ext_hdr_len: Option<u16>,
-    ) -> RTPPacket {
-        RTPPacket {
-            version,
-            padding,
-            extension,
-            cc,
-            marker,
-            payload_type,
-            seq_num,
-            timestamp,
-            ssrc,
-            csrcs,
-            profile_specific_ext_hdr_id,
-            ext_hdr_len,
-            payload: vec![],
-        }
-    }
-}
-
 impl From<&[u8]> for RTPPacket {
     fn from(data: &[u8]) -> Self {
         let version = if data[0] & 0x80 != 0 { 2 } else { 1 };

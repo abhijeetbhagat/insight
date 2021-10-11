@@ -137,11 +137,11 @@ impl RtspConnection {
 
             buf.push_str(&line);
             line.clear();
-            self.reader.read_line(&mut line);
+            self.reader.read_line(&mut line)?;
         }
 
         let mut vec = vec![0u8; content_length];
-        self.reader.read_exact(&mut vec);
+        self.reader.read_exact(&mut vec)?;
         buf.push_str(&String::from_utf8(vec).unwrap());
         self.parse_sdp(&buf);
         Ok(())
@@ -172,42 +172,44 @@ impl RtspConnection {
     }
 
     /// sends a setup command
-    pub fn setup(&mut self, media: MediaType) {
+    pub fn setup(&mut self, media: MediaType) -> Result<(), std::io::Error> {
         match media {
             MediaType::Video => self._setup(self.video_track.clone()),
             MediaType::Audio => self._setup(self.audio_track.clone()),
             MediaType::All => {
-                self._setup(self.video_track.clone());
-                self._setup(self.audio_track.clone());
+                self._setup(self.video_track.clone())?;
+                self._setup(self.audio_track.clone())
             }
         }
     }
 
-    fn _setup(&mut self, track: String) {
+    fn _setup(&mut self, track: String) -> Result<(), std::io::Error> {
         let command = format!("SETUP {}/{} RTSP/1.0\r\nCSeq: {}\r\nUser-Agent: insight\r\nSession: {}\r\nTransport: RTP/AVP;unicast;interleaved=0-1\r\n\r\n",           self.url, track, self.cseq, self.session
         );
         self.cseq += 1;
         self.send(&command.as_bytes());
 
         let mut data = vec![0; 1500];
-        self.reader.read(&mut data);
+        self.reader.read(&mut data)?;
+        Ok(())
     }
 
     /// sends a play command with the given session
-    pub fn play(&mut self) {
+    pub fn play(&mut self) -> Result<(), std::io::Error> {
         let command = format!("PLAY {} RTSP/1.0\r\nCSeq: {}\r\nUser-Agent: insight\r\nSession: {}\r\nRange: npt=0.000-\r\n\r\n", self.url, self.cseq, self.session);
         self.cseq += 1;
         self.send(&command.as_bytes());
 
         let mut data = vec![0; 1500];
-        self.reader.read(&mut data);
+        self.reader.read(&mut data)?;
+        Ok(())
     }
 
     /// convenience method that performs rtsp handshake (including play) internally
-    pub fn open(&mut self, media: MediaType) {
-        self.describe();
-        self.setup(media);
-        self.play();
+    pub fn open(&mut self, media: MediaType) -> Result<(), std::io::Error> {
+        self.describe()?;
+        self.setup(media)?;
+        self.play()
     }
 
     /// sends data over the underlying socket
@@ -218,67 +220,17 @@ impl RtspConnection {
     }
 
     /// reads rtp packets from the incoming stream
-    pub fn read_server_stream(&mut self) -> Option<RTPPacket> {
+    pub fn read_server_stream(&mut self) -> Result<Option<RTPPacket>, std::io::Error> {
         let mut buf = [0; 4];
-        self.reader.read_exact(&mut buf);
-        let mut packet: Option<RTPPacket> = None;
+        self.reader.read_exact(&mut buf)?;
         if buf[0] == 0x24 {
             //'$' means start of RTP packet
             let len = (buf[2] as u16) << 8 | buf[3] as u16; //combine the last two bytes as length of the packet
             let mut data = vec![0; len as usize];
-            self.reader.read_exact(data.as_mut_slice());
-            packet = Some(data.as_slice().into());
+            self.reader.read_exact(data.as_mut_slice())?;
+            return Ok(Some(data.as_slice().into()));
         }
-        packet
-    }
-
-    /// reads header of an rtp packet
-    fn read_header(&self, data: &[u8]) -> RTPPacket {
-        let version = if data[0] & 0x80 != 0 { 2 } else { 1 };
-        let padding = (data[0] & 0x20) > 0;
-        let extension = (data[0] & 0x10) > 0;
-        let cc = data[0] & 0xF;
-        let marker = (data[1] & 0x80) > 0;
-        let payload_type = data[1] & 0x7F;
-        let seq_num = (data[2] as u16) << 8 | data[3] as u16;
-        //TODO: abhi - create a struct to represent a raw packet and add utility methods to read
-        //data like - read_unsigned_int(), read_byte(), etc.
-        let timestamp = ((data[4] as u32) << 24)
-            | ((data[5] as u32) << 16)
-            | ((data[6] as u32) << 8)
-            | data[7] as u32;
-
-        let ssrc = ((data[8] as u32) << 24)
-            | ((data[9] as u32) << 16)
-            | ((data[10] as u32) << 8)
-            | data[11] as u32;
-
-        let mut i = 12usize;
-        let mut csrcs = Vec::new();
-        for _ in 0..cc {
-            let csrc = ((data[i] as u32) << 24)
-                | ((data[i + 1] as u32) << 16)
-                | ((data[i + 2] as u32) << 8)
-                | data[i + 3] as u32;
-            csrcs.push(csrc);
-            i += 4;
-        }
-
-        RTPPacket {
-            version,
-            padding,
-            extension,
-            cc,
-            marker,
-            payload_type,
-            seq_num,
-            timestamp,
-            ssrc,
-            csrcs: if cc > 0 { Some(csrcs) } else { None },
-            profile_specific_ext_hdr_id: None,
-            ext_hdr_len: None,
-            payload: data[i..].into(),
-        }
+        Ok(None)
     }
 
     /// gets session of this connection
