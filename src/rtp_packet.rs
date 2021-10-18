@@ -83,7 +83,7 @@ impl From<RTPPacket> for Vec<u8> {
     */
     fn from(packet: RTPPacket) -> Self {
         // TODO abhi: fix the capacity
-        let mut bytes = Vec::with_capacity(packet.payload.len() + 20);
+        let mut bytes = vec![0; 2];
         let header_byte: u8 = 0x80
             | if packet.padding { 1 << 5 } else { 0 }
             | if packet.extension { 1 << 4 } else { 0 }
