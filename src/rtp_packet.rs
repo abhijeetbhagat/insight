@@ -13,6 +13,7 @@ pub struct RTPPacket {
     pub profile_specific_ext_hdr_id: Option<u16>,
     pub ext_hdr_len: Option<u16>,
     pub payload: Vec<u8>,
+    pub total_len: usize,
 }
 
 impl From<&[u8]> for RTPPacket {
@@ -61,6 +62,7 @@ impl From<&[u8]> for RTPPacket {
             profile_specific_ext_hdr_id: None,
             ext_hdr_len: None,
             payload: data[i..].into(),
+            total_len: data.len(),
         }
     }
 }
