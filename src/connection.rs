@@ -228,7 +228,9 @@ impl RtspConnection {
             let len = (buf[2] as u16) << 8 | buf[3] as u16; //combine the last two bytes as length of the packet
             let mut data = vec![0; len as usize];
             self.reader.read_exact(data.as_mut_slice())?;
-            return Ok(Some(data.as_slice().into()));
+            let packet = data.as_slice().into();
+            // println!("packet: {:?}", packet);
+            return Ok(Some(packet));
         }
         Ok(None)
     }

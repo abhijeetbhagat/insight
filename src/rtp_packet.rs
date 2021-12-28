@@ -67,7 +67,7 @@ impl From<&[u8]> for RTPPacket {
     }
 }
 
-impl From<RTPPacket> for Vec<u8> {
+impl From<&RTPPacket> for Vec<u8> {
     /*
      *
         0                   1                   2                   3
@@ -83,7 +83,7 @@ impl From<RTPPacket> for Vec<u8> {
        |                             ....                              |
        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     */
-    fn from(packet: RTPPacket) -> Self {
+    fn from(packet: &RTPPacket) -> Self {
         // TODO abhi: fix the capacity
         let mut bytes = vec![0; 2];
         let header_byte: u8 = 0x80
@@ -95,7 +95,7 @@ impl From<RTPPacket> for Vec<u8> {
         bytes.extend_from_slice(&packet.seq_num.to_be_bytes());
         bytes.extend_from_slice(&packet.timestamp.to_be_bytes());
         bytes.extend_from_slice(&packet.ssrc.to_be_bytes());
-        if let Some(csrcs) = packet.csrcs {
+        if let Some(csrcs) = packet.csrcs.as_ref() {
             for quad in csrcs {
                 bytes.extend_from_slice(&quad.to_be_bytes());
             }
@@ -106,7 +106,7 @@ impl From<RTPPacket> for Vec<u8> {
         if let Some(ext_hdr_len) = packet.ext_hdr_len {
             bytes.extend_from_slice(&ext_hdr_len.to_be_bytes());
         }
-        bytes.extend(packet.payload);
+        bytes.extend(&packet.payload);
 
         bytes
     }
